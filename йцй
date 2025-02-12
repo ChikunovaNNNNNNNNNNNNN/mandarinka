@@ -1,17 +1,45 @@
-# Используя pyqt6 создать программу, в которую загружается изображенрие и с помощью cv2 на изображении выделяются облака, пожары
-
-
 import sys
 import cv2
+import pygame
 import numpy as np
+from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtCore import QUrl, QTimer
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QFileDialog
+
 
 class DetectionApp(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Music Player")
+        self.setWindowIcon(QIcon("й.jpg"))
 
+        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.player.setAudioOutput(self.audio_output)
+        self.audio_output.setVolume(0.5)  # Устанавливаем громкость
+        url = QUrl.fromLocalFile("pd.mp3")  # Укажите путь к вашему музыкальному файлу
+        self.player.setSource(url)
+        self.player.mediaStatusChanged.connect(self.loop_music)
+        self.player.play()
+
+        self.setStyleSheet("""
+                            QWidget {
+                                background-color: #333333;
+                                color: #ffffff;
+                            }
+                            QPushButton {
+                                background-color: #2a4238;
+                                color: #ffffff;
+                                border: none;
+                                padding: 5px;
+                            }
+                            QPushButton:hover {
+                                background-color: #7b917b;
+                            }
+                        """)
         self.setWindowTitle("Обнаружение облаков и пожаров")
         self.setGeometry(100, 100, 800, 600)
 
@@ -58,7 +86,10 @@ class DetectionApp(QWidget):
             self.result_image = self.image.copy()
             cv2.drawContours(self.result_image, contours, -1, (0, 255, 0), 2)
 
-            self.display_image(self.result_image)
+    def loop_music(self, status):
+        if status == QMediaPlayer.MediaStatus.EndOfMedia:
+            self.player.setPosition(0)  # Перематываем в начало
+            self.player.play()
 
     def detect_fire(self):
         if self.image is not None:
@@ -96,8 +127,12 @@ class DetectionApp(QWidget):
         self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.AspectRatioMode.KeepAspectRatio))
 
 
-if __name__ == '__main__':
+def main():
     app = QApplication(sys.argv)
     window = DetectionApp()
     window.show()
     sys.exit(app.exec())
+
+
+if __name__ == '__main__':
+    main()
